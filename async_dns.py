@@ -81,13 +81,14 @@ may be useful for threaded programms
                 active_queries[query] = host
             collect_results()
 
+        self.hosts = []
         self.in_progress = False
         return resolved_hosts
 
 
 if __name__ == "__main__":
     host_format = "www.host%d.com"
-    number_of_hosts = 10
+    number_of_hosts = 1
 
     hosts = [host_format % i for i in range(number_of_hosts)]
 

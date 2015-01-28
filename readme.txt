@@ -1,3 +1,15 @@
+This is a transition of a small, but useful python library to python 3.
+
+Transition was made by Alpherie (alpherie@yandex.ru)
+
+REMEMBER! This code requiers python3-adns to work!
+You can get it, for examle, here:
+https://github.com/trolldbois/python3-adns/
+
+Further goes original readme from the previous author.
+
+------------------------------------------------------------------------------
+
 This is a tiny Python library for resolving a lot of DNS records
 asynchronously. On a speedy internet connection it managed to do
 20,000 resolutions per minute.

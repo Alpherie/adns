@@ -14,13 +14,13 @@ def resolve_slow(hosts):
         try:
             host_info = socket.gethostbyname(host)
             resolved_hosts[host] = host_info
-        except socket.gaierror, err:
+        except socket.gaierror as err:
             resolved_hosts[host] = None
     return resolved_hosts
 
 if __name__ == "__main__":
     host_format = "www.domain%d.com"
-    number_of_hosts = 100
+    number_of_hosts = 1
 
     hosts = [host_format % i for i in range(number_of_hosts)]
 
@@ -28,5 +28,5 @@ if __name__ == "__main__":
     resolved_hosts = resolve_slow(hosts)
     end = time()
 
-    print "It took %.2f seconds to resolve %d hosts." % (end-start, number_of_hosts)
+    print ("It took %.2f seconds to resolve %d hosts." % (end-start, number_of_hosts))
 

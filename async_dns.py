@@ -30,8 +30,8 @@ class AsyncResolver(object):
     def add_hosts(self, more_hosts):
         """ Adding more hosts during resolving"""
         if self.in_progress:
-            self.hosts_are_added = True
             self.added_hosts = more_hosts
+            self.hosts_are_added = True
         else:
             self.hosts.extend(more_hosts)
 
@@ -75,6 +75,7 @@ may be useful for threaded programms
             while host_queue and len(active_queries) < self.intensity:
                 if self.hosts_are_added:
                     host_queue.extend(self.added_hosts)
+                    self.hosts_are_added = False
                 host = host_queue.pop()
                 query = self.adns.submit(host, adns.rr.A)
                 active_queries[query] = host

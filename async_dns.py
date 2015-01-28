@@ -9,6 +9,7 @@
 # http://www.catonmat.net/blog/asynchronous-dns-resolution
 #
 
+import sys
 import adns
 from time import time
 
@@ -22,28 +23,37 @@ class AsyncResolver(object):
         self.intensity = intensity
         self.adns = adns.init()
 
-    def resolve(self):
-        """ Resolves hosts and returns a dictionary of { 'host': 'ip' }. """
-        resolved_hosts = {}
+    def resolve(self, output_file):
+        """ Resolves hosts and writes result to file """
+        global resolved_hosts
+        resolved_hosts = 0 #it is a counter
+        global successfully_resolved_hosts
+        successfully_resolved_hosts = 0
         active_queries = {}
         host_queue = self.hosts[:]
 
         def collect_results():
             for query in self.adns.completed():
+                global resolved_hosts
                 answer = query.check()
                 host = active_queries[query]
                 del active_queries[query]
                 if answer[0] == 0:
                     ip = answer[3][0]
-                    resolved_hosts[host] = ip
+                    global successfully_resolved_hosts
+                    successfully_resolved_hosts += 1
+                    resolved_hosts += 1
+                    output_file.write(host + ' resolved to ' + str(ip))
                 elif answer[0] == 101: # CNAME
                     query = self.adns.submit(answer[1], adns.rr.A)
                     active_queries[query] = host
                 else:
-                    resolved_hosts[host] = None
+                    output_file.write(host + ' could not be resolved')
+                    resolved_hosts = resolved_hosts + 1
 
         def finished_resolving():
-            return len(resolved_hosts) == len(self.hosts)
+            global resolved_hosts
+            return resolved_hosts == len(self.hosts)
 
         while not finished_resolving():
             while host_queue and len(active_queries) < self.intensity:
@@ -52,19 +62,38 @@ class AsyncResolver(object):
                 active_queries[query] = host
             collect_results()
 
-        return resolved_hosts
+        return successfully_resolved_hosts
 
 
 if __name__ == "__main__":
-    host_format = "www.host%d.com"
-    number_of_hosts = 20000
+    try:
+        input_file = open(sys.argv[1], 'r')
+    except IndexError:
+        print 'Input file name incorrect!'
+        sys.exit()
+    try:
+        output_file = open(sys.argv[2], 'w')
+    except IndexError:
+        print 'Output file name incorrect!'
+        sys.exit()
 
-    hosts = [host_format % i for i in range(number_of_hosts)]
+    try:
+        intensity = int(sys.argv[3])
+        print 'Using intensity = %d' % (intensity)
+    except (IndexError, ValueError):
+        print 'Using default intensity = 500'
+        intensity = 500
 
-    ar = AsyncResolver(hosts, intensity=500)
+    hosts = [line.replace('\n', '') for line in input_file.readlines()]
+    #hosts = [line for line in input_file.readlines()]
+    global resolved_hosts
+    resolved_hosts = 0
+
+    ar = AsyncResolver(hosts, intensity=intensity)
     start = time()
-    resolved_hosts = ar.resolve()
+    successfully_resolved_hosts = ar.resolve(output_file)
+    output_file.close()
     end = time()
 
-    print "It took %.2f seconds to resolve %d hosts." % (end-start, number_of_hosts)
+    print "It took %.2f seconds to resolve %d hosts.\n%d hosts were resolved successfully\n" % (end-start, resolved_hosts, successfully_resolved_hosts)
 
